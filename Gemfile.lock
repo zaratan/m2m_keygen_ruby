@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    m2m_keygen (0.4.8)
+    m2m_keygen (0.4.9)
       rack
       sorbet-runtime
       zeitwerk (>= 2.6)
@@ -97,7 +97,7 @@ GEM
       byebug (~> 11.0)
       pry (>= 0.13, < 0.15)
     racc (1.7.1)
-    rack (3.0.8)
+    rack (3.2.6)
     rainbow (3.1.1)
     rake (13.0.6)
     rb-fsevent (0.11.2)
@@ -216,7 +216,7 @@ GEM
       sorbet-runtime (>= 0.5)
       yard (>= 0.9)
     yarp (0.13.0)
-    zeitwerk (2.6.12)
+    zeitwerk (2.8.2)
 
 PLATFORMS
   arm64-darwin-21
