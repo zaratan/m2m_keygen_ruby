@@ -104,4 +104,30 @@ describe M2mKeygen::ParamsEncoder do
       end
     end
   end
+
+  describe 'boolean value' do
+    context 'with top-level booleans' do
+      let(:params) { { 'a' => '1', 'b' => true, 'c' => false } }
+
+      it 'encodes params' do
+        expect(encoder.encode).to eq('a=1&b=true&c=false')
+      end
+    end
+
+    context 'with boolean in an array' do
+      let(:params) { { 'a' => '1', 'b' => [true, false] } }
+
+      it 'encodes params' do
+        expect(encoder.encode).to eq('a=1&b=[true,false]')
+      end
+    end
+
+    context 'with boolean in a hash' do
+      let(:params) { { 'a' => '1', 'b' => { 'c' => true } } }
+
+      it 'encodes params' do
+        expect(encoder.encode).to eq("a=1&b={\"c\":true}")
+      end
+    end
+  end
 end

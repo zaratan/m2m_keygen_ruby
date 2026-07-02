@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.8] - 2026-07-01
+
+### Fixed
+
+- Support Boolean fields
+
 ## [0.4.7] - 2023-10-04
 
 ### Fixed
@@ -79,7 +85,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Basic skeleton for gem
 
-[unreleased]: https://github.com/Billcorporate/m2m_keygen_ruby/compare/v0.4.7...HEAD
+[unreleased]: https://github.com/zaratan/m2m_keygen_ruby/compare/v0.4.8...HEAD
+[0.4.8]: https://github.com/zaratan/m2m_keygen_ruby/releases/tag/v0.4.8
 [0.4.7]: https://github.com/Billcorporate/m2m_keygen_ruby/releases/tag/v0.4.7
 [0.4.6]: https://github.com/Billcorporate/m2m_keygen_ruby/releases/tag/v0.4.6
 [0.4.5]: https://github.com/Billcorporate/m2m_keygen_ruby/releases/tag/v0.4.5

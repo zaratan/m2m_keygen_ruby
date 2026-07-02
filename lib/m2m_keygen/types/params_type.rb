@@ -17,6 +17,7 @@ module M2mKeygen
           Integer,
           String,
           Symbol,
+          T::Boolean,
           T::Array[T.untyped],
           T::Hash[T.untyped, T.untyped],
         )
