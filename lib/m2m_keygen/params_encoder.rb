@@ -24,7 +24,7 @@ module M2mKeygen
 
     sig do
       params(value: Types::ParamsValueType).returns(
-        T.any(String, Symbol, Integer),
+        T.any(String, Symbol, Integer, T::Boolean),
       )
     end
     def jsonify_value(value)
