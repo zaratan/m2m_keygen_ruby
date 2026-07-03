@@ -103,27 +103,4 @@ describe M2mKeygen::Signature do
       it { is_expected.to be_falsey }
     end
   end
-
-  describe 'fallback_fixed_length_secure_compare' do
-    let(:str_a) { Faker::Crypto.sha512 }
-
-    subject do
-      signature.send(:fallback_fixed_length_secure_compare, str_a, str_b)
-    end
-
-    context 'with a valid match' do
-      let(:str_b) { str_a }
-      it { is_expected.to be_truthy }
-    end
-
-    context 'with a same length mismatch' do
-      let(:str_b) { str_a[..-4] + '111' }
-      it { is_expected.to be_falsey }
-    end
-
-    context 'with a different length mismatch' do
-      let(:str_b) { str_a[..-2] }
-      it { is_expected.to be_falsey }
-    end
-  end
 end

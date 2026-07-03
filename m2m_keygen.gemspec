@@ -13,7 +13,7 @@ Gem::Specification.new do |spec|
     'Secure M2M key generator for Ruby. Generates secure keys for M2M communication in REST APIs.'
   spec.homepage = 'https://github.com/zaratan/m2m_keygen_ruby'
   spec.license = 'MIT'
-  spec.required_ruby_version = '>= 2.7.0'
+  spec.required_ruby_version = '>= 3.3.0'
 
   spec.metadata = {
     'homepage_uri' => spec.homepage,

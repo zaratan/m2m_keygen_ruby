@@ -46,35 +46,12 @@ module M2mKeygen
       ).returns(T::Boolean)
     end
     def validate(params:, verb:, path:, signature:)
-      if OpenSSL.methods.include?(:fixed_length_secure_compare)
-        OpenSSL.fixed_length_secure_compare(
-          sign(params: params, verb: verb, path: path),
-          signature,
-        )
-      else
-        fallback_fixed_length_secure_compare(
-          sign(params: params, verb: verb, path: path),
-          signature,
-        )
-      end
+      OpenSSL.fixed_length_secure_compare(
+        sign(params: params, verb: verb, path: path),
+        signature,
+      )
     rescue StandardError
       false
-    end
-
-    private
-
-    # Ruby 2.7 openssl lib doesn't have fixed_length_secure_compare method
-    # File activesupport/lib/active_support/security_utils.rb, line 11
-    # With sorbet fix
-    sig { params(str_a: String, str_b: String).returns(T::Boolean) }
-    def fallback_fixed_length_secure_compare(str_a, str_b)
-      return false unless str_a.bytesize == str_b.bytesize
-
-      l = str_a.unpack "C#{str_a.bytesize}"
-
-      res = 0
-      str_b.each_byte { |byte| res |= byte ^ l.shift.to_i }
-      res == 0
     end
   end
 end
