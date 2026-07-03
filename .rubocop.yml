@@ -6,9 +6,6 @@ require:
   - rubocop-performance
   - rubocop-sorbet
 
-# Layout and Style formatting is delegated to Syntax Tree (stree), not RuboCop.
-# RuboCop is kept for semantic/lint checks only. (Previously delegated to
-# Prettier via `inherit_gem: prettier`.)
 Layout:
   Enabled: false
 
@@ -22,16 +19,16 @@ AllCops:
   DisplayCopNames: true
   SuggestExtensions: false
   Exclude:
-    - 'bin/*'
-    - 'vendor/**/*'
+    - "bin/*"
+    - "vendor/**/*"
 
 Metrics/BlockLength:
   Exclude:
-    - 'spec/**/*.rb'
-    - 'Guardfile'
-    - 'config/environments/*.rb'
-    - 'lib/tasks/*.rake'
-    - 'm2m_keygen.gemspec'
+    - "spec/**/*.rb"
+    - "Guardfile"
+    - "config/environments/*.rb"
+    - "lib/tasks/*.rake"
+    - "m2m_keygen.gemspec"
 
 Gemspec/RequiredRubyVersion:
   Enabled: false
