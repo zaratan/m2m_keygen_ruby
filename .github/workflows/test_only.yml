@@ -41,3 +41,22 @@ jobs:
           bundler-cache: true
       - name: Check formatting (Syntax Tree)
         run: bundle exec stree check './lib/**/*.rb' './spec/**/*.rb' Guardfile Rakefile './*.gemspec' Gemfile
+  rack_compat:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        gemfile:
+          - rack_2
+          - rack_3
+    env:
+      BUNDLE_GEMFILE: gemfiles/${{ matrix.gemfile }}.gemfile
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.4'
+          bundler-cache: true
+      - name: Run tests
+        run: bundle exec rspec

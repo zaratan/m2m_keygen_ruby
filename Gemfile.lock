@@ -2,9 +2,9 @@ PATH
   remote: .
   specs:
     m2m_keygen (0.4.9)
-      rack
-      sorbet-runtime
-      zeitwerk (>= 2.6)
+      rack (>= 2.2, < 4.0)
+      sorbet-runtime (>= 0.5)
+      zeitwerk (>= 2.6, < 3.0)
 
 GEM
   remote: https://rubygems.org/
@@ -154,14 +154,14 @@ GEM
       simplecov_json_formatter (~> 0.1)
     simplecov-html (0.13.2)
     simplecov_json_formatter (0.1.4)
-    sorbet (0.6.13322)
-      sorbet-static (= 0.6.13322)
-    sorbet-runtime (0.6.13322)
-    sorbet-static (0.6.13322-universal-darwin)
-    sorbet-static (0.6.13322-x86_64-linux)
-    sorbet-static-and-runtime (0.6.13322)
-      sorbet (= 0.6.13322)
-      sorbet-runtime (= 0.6.13322)
+    sorbet (0.6.13323)
+      sorbet-static (= 0.6.13323)
+    sorbet-runtime (0.6.13323)
+    sorbet-static (0.6.13323-universal-darwin)
+    sorbet-static (0.6.13323-x86_64-linux)
+    sorbet-static-and-runtime (0.6.13323)
+      sorbet (= 0.6.13323)
+      sorbet-runtime (= 0.6.13323)
     spoom (1.8.2)
       erubi (>= 1.10.0)
       prism (>= 0.28.0)

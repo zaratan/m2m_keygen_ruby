@@ -15,6 +15,9 @@ module M2mKeygen
       @secret = T.let(secret, String)
       @algorithm = T.let(algorithm, String)
       OpenSSL::HMAC.hexdigest(@algorithm, @secret, '')
+    rescue StandardError => e
+      raise Error,
+            "Unsupported HMAC algorithm #{algorithm.inspect}: #{e.message}"
     end
 
     sig { returns(String) }

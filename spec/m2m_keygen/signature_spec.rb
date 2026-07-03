@@ -30,8 +30,11 @@ describe M2mKeygen::Signature do
     context 'with invalid algorithm' do
       let(:algorithm) { 'invalid' }
 
-      it 'raises error' do
-        expect { signature }.to raise_error(RuntimeError)
+      it 'raises a gem error regardless of the OpenSSL version' do
+        expect { signature }.to raise_error(
+          M2mKeygen::Error,
+          /Unsupported HMAC algorithm/,
+        )
       end
     end
   end
