@@ -8,9 +8,6 @@ module M2mKeygen
     extend T::Sig
 
     sig { returns(String) }
-    attr_reader :secret
-
-    sig { returns(String) }
     attr_reader :algorithm
 
     sig { params(secret: String, algorithm: String).void }
@@ -18,6 +15,11 @@ module M2mKeygen
       @secret = T.let(secret, String)
       @algorithm = T.let(algorithm, String)
       OpenSSL::HMAC.hexdigest(@algorithm, @secret, '')
+    end
+
+    sig { returns(String) }
+    def inspect
+      "#<#{self.class.name} algorithm=#{@algorithm.inspect}>"
     end
 
     sig do

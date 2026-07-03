@@ -23,13 +23,15 @@ module M2mKeygen
       # This will cover the case when Rails is used.
       req = Rack::Request.new(req.env)
       params = (req.params || {}).merge(parse_json_body(req))
-      !!@signature.validate(
-        params: params,
-        verb: req.request_method || 'get',
-        path: req.path || '/',
-        signature: req.env['HTTP_X_SIGNATURE'] || '',
-      ) && params['expiry'] && params['expiry'].to_i > Time.now.to_i &&
-        params['expiry'].to_i < Time.now.to_i + 120
+      !!(
+        @signature.validate(
+          params: params,
+          verb: req.request_method || 'get',
+          path: req.path || '/',
+          signature: req.env[@header_name] || '',
+        ) && params['expiry'] && params['expiry'].to_i > Time.now.to_i &&
+          params['expiry'].to_i < Time.now.to_i + 120
+      )
     end
 
     private
@@ -37,7 +39,9 @@ module M2mKeygen
     sig { params(req: T.untyped).returns(T::Hash[T.untyped, T.untyped]) }
     def parse_json_body(req)
       body = req.body.read
-      JSON.parse(body || '{}')
+      req.body.rewind
+      parsed = JSON.parse(body || '{}')
+      parsed.is_a?(Hash) ? parsed : {}
     rescue JSON::ParserError
       {}
     end

@@ -1,13 +1,19 @@
 inherit_from:
   - http://relaxed.ruby.style/rubocop.yml
 
-inherit_gem:
-  prettier: rubocop.yml
-
 require:
   - rubocop-faker
   - rubocop-performance
   - rubocop-sorbet
+
+# Layout and Style formatting is delegated to Syntax Tree (stree), not RuboCop.
+# RuboCop is kept for semantic/lint checks only. (Previously delegated to
+# Prettier via `inherit_gem: prettier`.)
+Layout:
+  Enabled: false
+
+Style:
+  Enabled: false
 
 AllCops:
   NewCops: enable
@@ -18,7 +24,6 @@ AllCops:
   Exclude:
     - 'bin/*'
     - 'vendor/**/*'
-    - 'node_modules/**/*'
 
 Metrics/BlockLength:
   Exclude:
@@ -27,10 +32,6 @@ Metrics/BlockLength:
     - 'config/environments/*.rb'
     - 'lib/tasks/*.rake'
     - 'm2m_keygen.gemspec'
-
-### Prettier
-Style:
-  Enabled: false
 
 Gemspec/RequiredRubyVersion:
   Enabled: false

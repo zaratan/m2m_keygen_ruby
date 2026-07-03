@@ -6,8 +6,13 @@ describe M2mKeygen::Signature do
   let(:signature) { M2mKeygen::Signature.new(secret, algorithm: algorithm) }
 
   describe 'initialization' do
-    it 'sets secret' do
-      expect(signature.secret).to eq(secret)
+    it 'does not expose the secret through a public reader' do
+      expect(signature).not_to respond_to(:secret)
+    end
+
+    it 'masks the secret in inspect' do
+      expect(signature.inspect).not_to include(secret)
+      expect(signature.inspect).to include(algorithm)
     end
 
     it 'sets algorithm' do

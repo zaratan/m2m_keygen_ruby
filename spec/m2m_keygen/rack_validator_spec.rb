@@ -36,9 +36,10 @@ describe M2mKeygen::RackValidator do
   let(:query_string) { "expiry=#{expiry}&a=2&c[]=ok&c[]=nok&d[f]=3&d[e]=4" }
   let(:method) { 'GET' }
   let(:path) { '/path' }
+  let(:signature_header) { "HTTP_#{header_name.tr('-', '_').upcase}" }
   let(:req_env) do
     {
-      'HTTP_X_SIGNATURE' => signature,
+      signature_header => signature,
       'rack.url_scheme' => 'http',
       'QUERY_STRING' => query_string,
       'REQUEST_METHOD' => method,
@@ -114,6 +115,48 @@ describe M2mKeygen::RackValidator do
       let(:req) { OverRackRequest.new(req_env) }
 
       it { is_expected.to be_truthy }
+    end
+
+    context 'with a custom header name' do
+      let(:header_name) { 'X-My-Signature' }
+
+      it 'reads the signature from the configured header' do
+        expect(validator.validate(req)).to be_truthy
+      end
+    end
+
+    context 'when the signature is valid but the expiry is missing' do
+      let(:query_string) { 'a=2&c[]=ok&c[]=nok&d[f]=3&d[e]=4' }
+      let(:params) do
+        {
+          'b' => '1',
+          'a' => '2',
+          'c' => %w[ok nok],
+          'd' => {
+            'e' => '4',
+            'f' => '3',
+          },
+        }
+      end
+
+      it 'returns false instead of raising' do
+        expect { validator.validate(req) }.not_to raise_error
+        expect(validator.validate(req)).to be(false)
+      end
+    end
+
+    context 'when the JSON body is valid but not an object' do
+      let(:body) { JSON.generate([1, 2, 3]) }
+
+      it 'returns false instead of raising' do
+        expect { validator.validate(req) }.not_to raise_error
+        expect(validator.validate(req)).to be_falsey
+      end
+    end
+
+    it 'rewinds the request body so it can be read downstream' do
+      validator.validate(req)
+      expect(req.env['rack.input'].read).to eq(body)
     end
   end
 end

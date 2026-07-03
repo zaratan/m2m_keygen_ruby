@@ -12,7 +12,6 @@ group :development do
   gem 'faker'
   gem 'guard-rspec', require: false
   gem 'overcommit', require: false
-  gem 'prettier', require: false
   gem 'pry-byebug'
   gem 'rake', '>= 13.0'
   gem 'rspec', '>= 3.0'
@@ -21,9 +20,10 @@ group :development do
   gem 'rubocop-faker', require: false
   gem 'rubocop-performance', require: false
   gem 'rubocop-sorbet', require: false
+  gem 'ruby-lsp', require: false
   gem 'simplecov', require: false
-  gem 'solargraph', require: false
   gem 'sorbet', require: false
+  gem 'syntax_tree', require: false
   gem 'tapioca', require: false
   gem 'yard', require: false
   gem 'yard-sorbet', require: false

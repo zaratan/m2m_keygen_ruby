@@ -41,22 +41,19 @@ PreCommit:
     enabled: true
   BundleAudit:
     enabled: true
-  Prettier:
+  SyntaxTree:
     enabled: true
-    required_executable: './bin/prettirun'
+    required_executable: './bin/streerun'
   Sorbet:
     enabled: true
     required_executable: './bin/sorbet_check'
-  Documentation:
-    enabled: true
-    required_executable: './bin/generate_and_add_documentation'
 PrePush:
   RSpec:
     enabled: true
     command: ['bundle', 'exec', 'rspec', '-f', 'p'] # Invoke within Bundler context
-  Prettier:
+  SyntaxTree:
     enabled: true
-    required_executable: './bin/prettirun'
+    required_executable: './bin/streerun'
   Rubocop:
     enabled: true
     required_executable: './bin/ruborun'
