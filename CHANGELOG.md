@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-07-04
+
+### Fixed
+
+- `RackValidator` no longer raises when the Rack input stream is not rewindable
+  or is absent. Rack 3 made `rack.input#rewind` optional, and `Rack::Lint`
+  (rackup's development default) hides it; the body is now read once and only
+  rewound when the stream supports it.
+
 ## [0.5.0] - 2026-07-03
 
 **This release replaces the signature scheme with a new, incompatible one
@@ -148,7 +157,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Basic skeleton for gem
 
-[unreleased]: https://github.com/zaratan/m2m_keygen_ruby/compare/v0.5.0...HEAD
+[unreleased]: https://github.com/zaratan/m2m_keygen_ruby/compare/v0.5.1...HEAD
+[0.5.1]: https://github.com/zaratan/m2m_keygen_ruby/releases/tag/v0.5.1
 [0.5.0]: https://github.com/zaratan/m2m_keygen_ruby/releases/tag/v0.5.0
 [0.4.9]: https://github.com/zaratan/m2m_keygen_ruby/releases/tag/v0.4.9
 [0.4.8]: https://github.com/zaratan/m2m_keygen_ruby/releases/tag/v0.4.8

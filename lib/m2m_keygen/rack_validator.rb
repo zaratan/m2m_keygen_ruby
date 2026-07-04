@@ -52,8 +52,7 @@ module M2mKeygen
       return false if nonce.bytesize > MAX_NONCE_BYTES
 
       expiry = request.env[@expiry_header].to_i
-      body = request.body.read.to_s
-      request.body.rewind
+      body = read_body(request)
 
       valid_signature =
         @signature.validate(
@@ -73,6 +72,21 @@ module M2mKeygen
     end
 
     private
+
+    # Rack 3 no longer guarantees a rewindable (or even present) input stream:
+    # under `Rack::Lint` (rackup's development default) `#rewind` is not
+    # exposed, and `rack.input` itself is optional. Read what we can and only
+    # rewind when the stream supports it, so downstream readers still work
+    # where they used to.
+    sig { params(request: Rack::Request).returns(String) }
+    def read_body(request)
+      input = request.body
+      return '' if input.nil?
+
+      body = input.read.to_s
+      input.rewind if input.respond_to?(:rewind)
+      body
+    end
 
     sig { returns(T::Boolean) }
     def nonce_required?
