@@ -6,10 +6,9 @@ module M2mKeygen
   class RackValidator
     extend T::Sig
 
-    ACCEPTED_VERSIONS = T.let([2].freeze, T::Array[Integer])
-
     DEFAULT_WINDOW_SECONDS = 120
     NONCE_TTL_MARGIN_SECONDS = 5
+    MAX_NONCE_BYTES = 256
 
     sig { returns(Signature) }
     attr_reader :signature
@@ -50,6 +49,7 @@ module M2mKeygen
       request = Rack::Request.new(req.env)
       nonce = request.env[@nonce_header].to_s
       return false if nonce.empty? && nonce_required?
+      return false if nonce.bytesize > MAX_NONCE_BYTES
 
       expiry = request.env[@expiry_header].to_i
       body = request.body.read.to_s

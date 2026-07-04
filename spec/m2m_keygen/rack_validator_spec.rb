@@ -81,17 +81,25 @@ describe M2mKeygen::RackValidator do
     end
   end
 
-  describe '::ACCEPTED_VERSIONS' do
-    it 'currently accepts only protocol version 2' do
-      expect(described_class::ACCEPTED_VERSIONS).to eq([2])
-    end
-  end
-
   describe '#validate' do
     subject(:validate) { validator.validate(req) }
 
     it 'works in the normal case' do
       expect(validate).to be(true)
+    end
+
+    context 'when the nonce header is longer than the allowed maximum' do
+      let(:nonce) { 'n' * (described_class::MAX_NONCE_BYTES + 1) }
+
+      it 'is rejected before signing' do
+        expect(validate).to be(false)
+      end
+    end
+
+    context 'with a percent-encoded non-ASCII path (wire form)' do
+      let(:path) { '/r%C3%A9sum%C3%A9' }
+
+      it { is_expected.to be(true) }
     end
 
     context 'when the signature is invalid' do

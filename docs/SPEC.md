@@ -28,7 +28,7 @@ components, in this exact order:
 |---|------------------|--------------------------------------------------------------|
 | 1 | scheme           | the literal ASCII string `m2m-keygen/2`                      |
 | 2 | verb             | the HTTP method, uppercased (ASCII)                          |
-| 3 | path             | the request path, percent-decoded (as `Rack::Request#path` / `new URL().pathname` give it) |
+| 3 | path             | the request path exactly as it appears on the wire — **percent-encoded, not decoded** (as `Rack::Request#path` returns the raw `PATH_INFO`, and `new URL(...).pathname` returns it in JS). Signer and verifier must see the same bytes. |
 | 4 | expiry           | the expiry, an integer Unix timestamp (seconds), as its decimal string |
 | 5 | nonce            | the nonce string                                             |
 | 6 | canonical_query  | the canonicalized query string (see below)                  |
@@ -54,6 +54,12 @@ bytes from its neighbour.
 - The default `algorithm` is `sha512`. `hex` is lowercase hexadecimal.
 - The whole canonical string is assembled as raw bytes, so a binary body is
   handled with no special casing.
+- The scheme string (component 1) carries the version. There is no version
+  negotiation: a verifier accepts exactly `m2m-keygen/2`, so senders and verifiers
+  move to a new version together (see [MIGRATING.md](MIGRATING.md)).
+- Verification compares the recomputed hex digest to the received one in
+  **constant time**; a signature of unexpected length is rejected (`false`)
+  without a length-dependent early branch.
 
 ## canonical_query
 
@@ -96,6 +102,23 @@ sender path), values become strings as follows before percent-encoding:
 
 None of this applies to the receiver: it never rebuilds values, it signs the
 `query`/`body` bytes it received.
+
+### Query encoding is not part of the contract
+
+The signature covers the **query bytes on the wire**, not the map a sender started
+from. How a sender percent-encodes a map into a query string (space as `+` vs
+`%20`, which characters are escaped, …) is **not** specified here and may differ
+between languages — that is fine, because the receiver re-signs the raw query it
+received. What is guaranteed: a sender signs exactly the bytes it sends.
+
+Two consequences:
+
+- **Send the signed query (and path) verbatim.** Do not let your HTTP client
+  re-encode or reorder the query after signing, or the bytes sent will differ from
+  the bytes signed and validation will fail.
+- Two senders in different languages will not necessarily produce byte-identical
+  signatures for the same map. If you need that (e.g. shared idempotency keys),
+  agree on strings/integers and on the exact query form.
 
 ## Transport
 
@@ -177,11 +200,13 @@ must reproduce every digest. (These are kept in sync with
 - sha256: `d1e464edbae8637f7db51c0f858a9a64db2c93208381c8055c2e4787b3fc5589`
 - sha512: `c1f52dcfa6f880d1e601ff6db4889e64678e5057872e1a8e1831232e49ac2487a9c30981cbb67eff9e2dc3e7f54d4e05966bcd4d5bcb9b7f19a77204bd37ad6e`
 
-### 3. Non-ASCII bytes in path, query and body
+### 3. Percent-encoded (wire-form) path, with non-ASCII query and body
 
-- verb `POST`, path `/résumé`, expiry `1700000200`, nonce `nonce-non-ascii`, query `name=%C3%A9l%C3%A8ve`, body `café ☃ 日本語`
-- sha256: `66d0c10cca4b61021fcce45f27c07ffde3fb92e96f4fefbfb90283eaed84faa4`
-- sha512: `75009832682f8e4ad03527000bc45a1885867b7965969f5b359c4e5af36fdc91b19ca58c1ab0dab2c6027531ec9ffcc8538287e6a06032fc077ccc865d188675`
+The path is the wire form `/r%C3%A9sum%C3%A9` (the request-target for `/résumé`), **not** the decoded `/résumé`.
+
+- verb `POST`, path `/r%C3%A9sum%C3%A9`, expiry `1700000200`, nonce `nonce-non-ascii`, query `name=%C3%A9l%C3%A8ve`, body `café ☃ 日本語`
+- sha256: `4d521773b4b15bff07e73c4a4a8db483314b62725b42b653e2d887efdca78404`
+- sha512: `ec42e774af9730d59456fcf2909d7606a10d61d4187badf2b0f7b4b62047495daa4d9f5d286bdb1e4b9a61b8b23e5801e13b563177c3e7f3d6f553f6dad6f7f1`
 
 ### 4. Body with control characters (tab, newline, NUL)
 
@@ -194,6 +219,22 @@ must reproduce every digest. (These are kept in sync with
 - verb `POST`, path `/ledger`, expiry `1700000400`, nonce `nonce-bignum`, query `amount=123456789012345678901234567890`, body `{"amount":123456789012345678901234567890}`
 - sha256: `b07e7563ce1f7c4819f3052ba3628a1a5d155b77600a5765c40ca610784e7808`
 - sha512: `32078f4c96255ef99ca9e80ecb4ec800d4056ef136dbd42dc4c3bbfc33b153c3e2ef23a1a09b574d4ffd558ede3d30bcfc1c3cc041deaf5c76c70307e18a3c5d`
+
+### 6. Out-of-order multi-pair query (proves the pair sort)
+
+The query arrives as `b=2&a=10&a=1`; `canonical_query` sorts the pairs by bytes to `a=1&a=10&b=2`. An implementation that forgets to sort produces a different digest and fails here.
+
+- verb `GET`, path `/list`, expiry `1700000500`, nonce `nonce-sort`, query `b=2&a=10&a=1`, body *(empty)*
+- sha256: `f3da6c2db729b59fdbaa301eb1bebea55253afdcd6039e055849a6404ffdd845`
+- sha512: `db925510d0621073b4a37441f3f0df8697b08d204feae25f663a284840cbaceced9cd28acad09121f7d64749d4c6ab690c279dcc6b14b6a5ad81c0dce86d3cc2`
+
+### 7. Astral character in the query (proves byte-order, not UTF-16, sorting)
+
+Two pairs whose sort order differs by encoding: U+FFFD starts with byte `0xEF`, U+1F600 (😀) with `0xF0`, so byte order gives `�=bmp` first — canonical query `�=bmp&😀=astral`. A JS `.sort()` (UTF-16 code units: the 😀 surrogate `0xD83D` sorts before `0xFFFD`) would order them the other way and produce a different digest. The raw UTF-8 bytes of the two pairs are in the query.
+
+- verb `GET`, path `/emoji`, expiry `1700000600`, nonce `nonce-astral`, query `😀=astral&�=bmp` (raw UTF-8), body *(empty)*
+- sha256: `32f0e93a4f926293d232a0a81cebbe5206a9f7619413dd126bc7b9dd027bbb69`
+- sha512: `4109fcd615c1a6231d4d8dac08416d28e0bf324bc7b65f3b8193651e7eed8c6a072c08df2e6c3c16daf8a921e6b2a8102e04e726521ac6d98e9c6128a6e44a69`
 
 ## Out of scope (threat model)
 

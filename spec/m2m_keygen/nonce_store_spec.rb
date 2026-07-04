@@ -24,18 +24,21 @@ describe M2mKeygen::NonceStore::Memory do
       expect(store.add('abc', ttl: 60)).to be(false)
     end
 
-    it 'returns exactly one true when two threads race on the same nonce' do
-      results = Queue.new
+    it 'records a racing nonce exactly once across many threads and rounds' do
+      thread_count = 12
 
-      threads =
-        Array.new(2) do
-          Thread.new { results << store.add('racing-nonce', ttl: 60) }
-        end
-      threads.each(&:join)
-      outcomes = Array.new(2) { results.pop }
+      100.times do |round|
+        nonce = "racing-nonce-#{round}"
+        results = Queue.new
+        threads =
+          Array.new(thread_count) do
+            Thread.new { results << store.add(nonce, ttl: 60) }
+          end
+        threads.each(&:join)
+        outcomes = Array.new(thread_count) { results.pop }
 
-      expect(outcomes.count(true)).to eq(1)
-      expect(outcomes.count(false)).to eq(1)
+        expect(outcomes.count(true)).to eq(1)
+      end
     end
 
     it 'purges an expired entry so the nonce becomes reusable' do
