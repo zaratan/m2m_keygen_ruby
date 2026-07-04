@@ -2,6 +2,18 @@
 
 require 'rack'
 
+# Minimal rack.input double exposing only #read: Rack 3 made #rewind optional
+# and Rack::Lint (rackup's development default) hides it.
+class NonRewindableInput
+  def initialize(content)
+    @io = StringIO.new(content)
+  end
+
+  def read(*args)
+    @io.read(*args)
+  end
+end
+
 describe M2mKeygen::RackValidator do
   let(:secret) { 'secret' }
   let(:algorithm) { 'sha512' }
@@ -264,6 +276,45 @@ describe M2mKeygen::RackValidator do
       it 'validates the signed body and still leaves it rewound' do
         expect(validate).to be(true)
         expect(req.env['rack.input'].read).to eq(body)
+      end
+    end
+
+    context 'with a non-rewindable input stream (Rack 3 / Rack::Lint)' do
+      let(:non_rewindable_input) { NonRewindableInput.new(body) }
+      let(:verb) { 'POST' }
+      let(:query_string) { '' }
+      let(:body) { '{"name":"Ada"}' }
+      let(:req_env) do
+        auth_env.merge(
+          'rack.url_scheme' => 'http',
+          'QUERY_STRING' => query_string,
+          'REQUEST_METHOD' => verb,
+          'HTTP_VERSION' => 'HTTP/1.1',
+          'HTTP_HOST' => 'localhost:3000',
+          'PATH_INFO' => path,
+          'rack.input' => non_rewindable_input,
+        )
+      end
+
+      it 'validates the signed body without raising' do
+        expect(validate).to be(true)
+      end
+    end
+
+    context 'without a rack.input stream (optional in Rack 3)' do
+      let(:req_env) do
+        auth_env.merge(
+          'rack.url_scheme' => 'http',
+          'QUERY_STRING' => query_string,
+          'REQUEST_METHOD' => verb,
+          'HTTP_VERSION' => 'HTTP/1.1',
+          'HTTP_HOST' => 'localhost:3000',
+          'PATH_INFO' => path,
+        )
+      end
+
+      it 'treats the body as empty and validates' do
+        expect(validate).to be(true)
       end
     end
   end
