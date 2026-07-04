@@ -1,36 +1,39 @@
 inherit_from:
   - http://relaxed.ruby.style/rubocop.yml
 
-inherit_gem:
-  prettier: rubocop.yml
-
 require:
   - rubocop-faker
   - rubocop-performance
   - rubocop-sorbet
 
+Layout:
+  Enabled: false
+
+Style:
+  Enabled: false
+
+# `sign`/`validate` are documented public API methods that return booleans;
+# renaming them to end with `?` would be a breaking change.
+Naming/PredicateMethod:
+  Enabled: false
+
 AllCops:
   NewCops: enable
-  TargetRubyVersion: 3.0
+  TargetRubyVersion: 3.3
   DisplayStyleGuide: true
   DisplayCopNames: true
   SuggestExtensions: false
   Exclude:
-    - 'bin/*'
-    - 'vendor/**/*'
-    - 'node_modules/**/*'
+    - "bin/*"
+    - "vendor/**/*"
 
 Metrics/BlockLength:
   Exclude:
-    - 'spec/**/*.rb'
-    - 'Guardfile'
-    - 'config/environments/*.rb'
-    - 'lib/tasks/*.rake'
-    - 'm2m_keygen.gemspec'
-
-### Prettier
-Style:
-  Enabled: false
+    - "spec/**/*.rb"
+    - "Guardfile"
+    - "config/environments/*.rb"
+    - "lib/tasks/*.rake"
+    - "m2m_keygen.gemspec"
 
 Gemspec/RequiredRubyVersion:
   Enabled: false

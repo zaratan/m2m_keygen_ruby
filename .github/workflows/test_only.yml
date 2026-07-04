@@ -5,17 +5,18 @@ on:
 
 jobs:
   tests:
-    strategy: 
+    strategy:
+      fail-fast: false
       matrix:
         ruby:
-          - '3.0'
-          - '3.1'
-          - '3.2'
+          - '3.3'
+          - '3.4'
+          - '4.0'
 
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -27,20 +28,33 @@ jobs:
         run: bundle exec rspec
       - name: Run type checking (Sorbet)
         run: bundle exec srb tc
-  prettier:
+  format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.2'
+          ruby-version: '3.4'
           bundler-cache: true
-      - name: Set up Node
-        uses: actions/setup-node@v2
+      - name: Check formatting (Syntax Tree)
+        run: bundle exec stree check './lib/**/*.rb' './spec/**/*.rb' Guardfile Rakefile './*.gemspec' Gemfile
+  rack_compat:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        gemfile:
+          - rack_2
+          - rack_3
+    env:
+      BUNDLE_GEMFILE: gemfiles/${{ matrix.gemfile }}.gemfile
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
         with:
-          node-version: '18'
-      - name: Install yarn dep
-        run: yarn install
-      - name: Check prettier
-        run: yarn prettier -c './lib/**/*.rb' 'spec/**/*.rb' Guardfile Rakefile Gemfile m2m_keygen.gemspec
+          ruby-version: '3.4'
+          bundler-cache: true
+      - name: Run tests
+        run: bundle exec rspec

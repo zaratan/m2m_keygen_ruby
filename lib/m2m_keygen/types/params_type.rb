@@ -3,24 +3,13 @@ module M2mKeygen
   module Types
     extend T::Sig
 
-    ParamsType =
-      T.type_alias do
-        T.nilable(T::Hash[T.any(String, Symbol), T.nilable(ParamsValueType)])
-      end
-
-    ParamsHashNotNilType =
-      T.type_alias { T::Hash[T.any(String, Symbol), ParamsValueType] }
+    ParamsScalarType =
+      T.type_alias { T.any(String, Symbol, Integer, Float, T::Boolean) }
 
     ParamsValueType =
-      T.type_alias do
-        T.any(
-          Integer,
-          String,
-          Symbol,
-          T::Boolean,
-          T::Array[T.untyped],
-          T::Hash[T.untyped, T.untyped],
-        )
-      end
+      T.type_alias { T.any(ParamsScalarType, T::Array[ParamsScalarType]) }
+
+    ParamsType =
+      T.type_alias { T::Hash[T.any(String, Symbol), ParamsValueType] }
   end
 end

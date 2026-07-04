@@ -9,3 +9,6 @@
 
 # rspec failure tracking
 .rspec_status
+
+# Per-Rack lockfiles generated for the CI compatibility matrix
+/gemfiles/*.lock

@@ -7,17 +7,18 @@ on:
 
 jobs:
   tests:
-    strategy: 
+    strategy:
+      fail-fast: false
       matrix:
         ruby:
-          - '3.0'
-          - '3.1'
-          - '3.2'
+          - '3.3'
+          - '3.4'
+          - '4.0'
 
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -29,52 +30,74 @@ jobs:
         run: bundle exec rspec
       - name: Run type checking (Sorbet)
         run: bundle exec srb tc
-  prettier:
+  format:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.2'
+          ruby-version: '3.4'
           bundler-cache: true
-      - name: Set up Node
-        uses: actions/setup-node@v2
+      - name: Check formatting (Syntax Tree)
+        run: bundle exec stree check './lib/**/*.rb' './spec/**/*.rb' Guardfile Rakefile './*.gemspec' Gemfile
+  rack_compat:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        gemfile:
+          - rack_2
+          - rack_3
+    env:
+      BUNDLE_GEMFILE: gemfiles/${{ matrix.gemfile }}.gemfile
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
         with:
-          node-version: '18'
-      - name: Install yarn dep
-        run: yarn install
-      - name: Check prettier
-        run: yarn prettier -c './lib/**/*.rb' 'spec/**/*.rb' Guardfile Rakefile Gemfile m2m_keygen.gemspec
+          ruby-version: '3.4'
+          bundler-cache: true
+      - name: Run tests
+        run: bundle exec rspec
   version_match:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: '3.2'
+          ruby-version: '3.4'
           bundler-cache: true
       - name: Check version matching
         run: bin/check_version_change
   release:
-    needs: [tests, prettier, version_match]
+    needs: [tests, format, rack_compat, version_match]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # push the release tag
+      id-token: write # trusted publishing OIDC token
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          ruby-version: 3.2
+          ruby-version: '3.4'
           bundler-cache: true
-      - name: Prepare credentials
-        env:
-          RUBYGEM_KEY: ${{ secrets.RUBYGEM_KEY }}
-        run: "mkdir -p ~/.gem && echo -e \"---\\r\\n:rubygems_api_key: $RUBYGEM_KEY\" > ~/.gem/credentials && chmod 0600 ~/.gem/credentials"
-      - name: Setup username/email
-        run: 'git config --global user.email zaratan@hey.com && git config --global user.name "Denis <Zaratan> Pasin"'
-      - name: Fetch tags from remote
-        run: 'git fetch -t'
-      - name: Publish if version change
-        run: 'git diff `git tag | tail -1` -- lib/m2m_keygen/version.rb | grep -E "^\+.*VERSION" && rake release || echo "No release for now"'
+      - name: Check for version change
+        id: version_check
+        run: |
+          git fetch --tags --force
+          if git diff "$(git tag | tail -1)" -- lib/m2m_keygen/version.rb | grep -qE "^\+.*VERSION"; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No version change, skipping release."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Release to RubyGems via trusted publishing
+        if: steps.version_check.outputs.changed == 'true'
+        uses: rubygems/release-gem@v1
