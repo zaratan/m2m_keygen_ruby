@@ -9,46 +9,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.0] - 2026-07-03
 
+**This release replaces the signature scheme with a new, incompatible one
+(`m2m-keygen/2`). Senders and receivers must upgrade together. See
+[docs/MIGRATING.md](docs/MIGRATING.md).**
+
 ### Added
 
-- Test the gem against Ruby 3.3, 3.4 and 4.0 in CI.
-- CI compatibility matrix running the suite against both Rack 2 and Rack 3.
+- New `m2m-keygen/2` signature scheme: the HMAC now covers the request's wire
+  bytes (method, path, byte-order-sorted query, raw body) length-prefixed, plus
+  a signed expiry and nonce. This closes the v1 canonicalization collisions
+  (unescaped delimiters, nil/empty ambiguity, type confusion, field boundaries).
+- Anti-replay: a signed per-request nonce plus a pluggable `NonceStore`
+  (`Memory` for single-process, `Disabled` for an explicit opt-out), with
+  reference `Redis`/`Postgres` stores under `examples/nonce_store/`.
+- `RequestSigner`: a client helper that builds the query and the
+  signature/expiry/nonce headers for an outgoing request.
+- `docs/SPEC.md`: the language-agnostic wire-format spec and golden vectors —
+  the contract the TypeScript sibling must reproduce.
+- CI now tests Ruby 3.3/3.4/4.0 and a Rack 2 / Rack 3 compatibility matrix.
 
 ### Changed
 
-- Require Ruby `>= 3.3` (was `>= 2.7`).
-- Bind runtime dependencies: `rack (>= 2.2, < 4.0)`, `sorbet-runtime (>= 0.5)`,
-  `zeitwerk (>= 2.6, < 3.0)`.
-- `RackValidator#validate` now reads the signature from the configured
-  `header_name` instead of a hardcoded `X-Signature` header.
-- `Signature.new` raises `M2mKeygen::Error` on an unsupported algorithm,
-  consistently across OpenSSL versions.
-- Replace Prettier with Syntax Tree for formatting (removes the Node.js
-  toolchain) and Solargraph with ruby-lsp.
-- Upgrade development dependencies (RuboCop 1.88, Sorbet 0.6, RSpec 3.13,
-  Tapioca 0.19, …) and Bundler 4; regenerate Sorbet RBIs.
-
-### Fixed
-
-- `RackValidator#validate` returns `false` instead of raising when the `expiry`
-  parameter is missing.
-- `RackValidator` no longer returns a 500 on a JSON body that is valid but not
-  an object.
-- `RackValidator` rewinds the request body so downstream middleware can read it.
-- Restore the published gem metadata (homepage, source code, changelog and bug
-  tracker URIs) that was previously overwritten.
+- **BREAKING** `Signature#sign` / `#validate` take
+  `verb:`/`path:`/`expiry:`/`nonce:`/`query:`/`body:` (no longer a `params:`
+  hash).
+- **BREAKING** `RackValidator.new` now requires a `nonce_store:` (no default —
+  the anti-replay choice must be explicit), and reads the expiry and nonce from
+  `X-M2M-Expiry` / `X-M2M-Nonce` headers.
+- Require Ruby `>= 3.3` (was `>= 2.7`); bind runtime deps
+  (`rack (>= 2.2, < 4.0)`, `sorbet-runtime (>= 0.5)`, `zeitwerk (>= 2.6, < 3.0)`).
+- Replace Prettier with Syntax Tree and Solargraph with ruby-lsp; upgrade dev
+  dependencies (RuboCop 1.88, Sorbet 0.6, RSpec 3.13, Tapioca 0.19, …) and
+  Bundler 4.
 
 ### Removed
 
+- **BREAKING** `ParamsEncoder` (replaced by `Canonicalizer`) and the v1 hash-based
+  signing input.
 - Committed YARD HTML documentation and the Ruby 2.7 constant-time comparison
   fallback.
 
 ### Security
 
+- Real replay protection: signed nonces enforced through the `NonceStore`
+  (the receiver fails closed on a missing nonce unless replay protection is
+  explicitly disabled).
+- `Signature` no longer exposes the secret through a public reader and masks it
+  in `#inspect`.
 - Update dependencies to clear all known advisories (rexml, concurrent-ruby,
   yard, …).
-- Stop exposing the HMAC secret through a public reader and mask it in
-  `Signature#inspect`.
+
+### Fixed
+
+- Restore the published gem metadata (homepage, source code, changelog and bug
+  tracker URIs) that was previously overwritten.
 
 ## [0.4.9] - 2026-07-01
 

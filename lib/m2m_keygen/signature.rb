@@ -1,7 +1,6 @@
 # typed: strict
 
 require 'openssl'
-require 'json'
 
 module M2mKeygen
   class Signature
@@ -14,6 +13,7 @@ module M2mKeygen
     def initialize(secret, algorithm: 'sha512')
       @secret = T.let(secret, String)
       @algorithm = T.let(algorithm, String)
+      # Fail fast on an unsupported algorithm (OpenSSL's error class varies).
       OpenSSL::HMAC.hexdigest(@algorithm, @secret, '')
     rescue StandardError => e
       raise Error,
@@ -27,30 +27,50 @@ module M2mKeygen
 
     sig do
       params(
-        params: Types::ParamsType,
-        verb: T.any(String, Symbol),
+        verb: String,
         path: String,
+        expiry: Integer,
+        nonce: String,
+        query: String,
+        body: String,
       ).returns(String)
     end
-    def sign(params:, verb:, path:)
+    def sign(verb:, path:, expiry:, nonce:, query: '', body: '')
       OpenSSL::HMAC.hexdigest(
         @algorithm,
         @secret,
-        "#{verb.to_s.upcase}#{path}#{ParamsEncoder.new(params).encode}",
+        Canonicalizer.canonical(
+          verb: verb,
+          path: path,
+          expiry: expiry,
+          nonce: nonce,
+          query: query,
+          body: body,
+        ),
       )
     end
 
     sig do
       params(
-        params: Types::ParamsType,
-        verb: T.any(String, Symbol),
-        path: String,
         signature: String,
+        verb: String,
+        path: String,
+        expiry: Integer,
+        nonce: String,
+        query: String,
+        body: String,
       ).returns(T::Boolean)
     end
-    def validate(params:, verb:, path:, signature:)
+    def validate(signature:, verb:, path:, expiry:, nonce:, query: '', body: '')
       OpenSSL.fixed_length_secure_compare(
-        sign(params: params, verb: verb, path: path),
+        sign(
+          verb: verb,
+          path: path,
+          expiry: expiry,
+          nonce: nonce,
+          query: query,
+          body: body,
+        ),
         signature,
       )
     rescue StandardError

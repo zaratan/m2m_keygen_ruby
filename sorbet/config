@@ -3,3 +3,4 @@
 --ignore=node_modules
 --ignore=tmp
 --ignore=vendor
+--ignore=examples
