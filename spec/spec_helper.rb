@@ -31,8 +31,10 @@ SimpleCov.formatters = [SimpleCov::Formatter::HTMLFormatter]
 
 SimpleCov.at_exit do
   SimpleCov.result.format!
-  SimpleCov.minimum_coverage 90
-  SimpleCov.minimum_coverage_by_file 80
+  SimpleCov.coverage(:line) do
+    minimum 90
+    minimum 80, per: :file
+  end
 end
 
 SimpleCov.start { load_profile 'test_frameworks' }

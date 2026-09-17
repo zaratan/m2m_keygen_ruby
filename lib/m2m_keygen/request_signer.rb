@@ -27,9 +27,9 @@ module M2mKeygen
       nonce_header: 'X-M2M-Nonce'
     )
       @signature = T.let(Signature.new(secret, algorithm: algorithm), Signature)
-      @header_name = T.let(header_name, String)
-      @expiry_header = T.let(expiry_header, String)
-      @nonce_header = T.let(nonce_header, String)
+      @header_name = header_name
+      @expiry_header = expiry_header
+      @nonce_header = nonce_header
     end
 
     sig do

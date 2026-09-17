@@ -21,7 +21,7 @@ module M2mKeygen
 
       sig { params(max_size: Integer).void }
       def initialize(max_size: DEFAULT_MAX_SIZE)
-        @max_size = T.let(max_size, Integer)
+        @max_size = max_size
         @mutex = T.let(Mutex.new, Mutex)
         @expirations_by_nonce = T.let({}, T::Hash[String, Float])
       end

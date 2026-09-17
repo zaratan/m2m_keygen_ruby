@@ -37,8 +37,8 @@ module M2mKeygen
       nonce_header: 'X-M2M-Nonce'
     )
       @signature = T.let(Signature.new(secret, algorithm: algorithm), Signature)
-      @nonce_store = T.let(nonce_store, NonceStore)
-      @window = T.let(window, Integer)
+      @nonce_store = nonce_store
+      @window = window
       @header_name = T.let(env_key_for(header_name), String)
       @expiry_header = T.let(env_key_for(expiry_header), String)
       @nonce_header = T.let(env_key_for(nonce_header), String)
